@@ -3,107 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temporizador Regressivo</title>
+    <title>Temporizador Responsivo</title>
     <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --text-main: #f1f5f9;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
+            justify-content: center;
+            min-height: 100vh;
             margin: 0;
-            background-color: #1a1a1a;
-            color: white;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        .container {
+        .config-section {
+            background: var(--card-bg);
+            padding: 10px 10px 20px 10px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 400px;
             text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
-        h1 {
-            margin-bottom: 20px;
-            font-weight: 300;
-            color: #00d4ff;
+        input[type="datetime-local"] {
+            width: 90%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
         }
 
-        .countdown {
-            display: flex;
-            gap: 20px;
+        input[type="datetime-local"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        .countdown-container {
+            display: grid;
+            /* Grade que se adapta: mínimo 120px por quadrado */
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px;
+            width: 100%;
+            max-width: 600px;
         }
 
         .time-box {
-            background: #333;
-            padding: 20px;
-            border-radius: 10px;
-            min-width: 80px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            background: var(--card-bg);
+            padding: 25px 10px;
+            border-radius: 16px;
+            text-align: center;
+            border-bottom: 4px solid var(--accent-color);
         }
 
         .number {
             display: block;
-            font-size: 2.5em;
-            font-weight: bold;
+            font-size: 3rem; /* Tamanho mobile base */
+            font-weight: 800;
+            line-height: 1;
         }
 
         .label {
-            font-size: 0.8em;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            color: #aaa;
+            letter-spacing: 2px;
+            color: #94a3b8;
+            margin-top: 8px;
+            display: block;
+        }
+
+        /* --- AJUSTES PARA TELAS MAIORES (TABLETS E PC) --- */
+        @media (min-width: 480px) {
+            .countdown-container {
+                grid-template-columns: repeat(4, 1fr); /* 4 colunas em linha */
+            }
+            .number {
+                font-size: 3.5rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .number {
+                font-size: 4.5rem;
+            }
+            .config-section {
+                max-width: 500px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Contagem Regressiva</h1>
-        <div class="countdown">
-            <div class="time-box">
-                <span class="number" id="days">00</span>
-                <span class="label">Dias</span>
-            </div>
-            <div class="time-box">
-                <span class="number" id="hours">00</span>
-                <span class="label">Horas</span>
-            </div>
-            <div class="time-box">
-                <span class="number" id="minutes">00</span>
-                <span class="label">Minutos</span>
-            </div>
-            <div class="time-box">
-                <span class="number" id="seconds">00</span>
-                <span class="label">Segundos</span>
-            </div>
+    <div class="config-section">
+        <h2 style="margin-top:0">Configurar Evento</h2>
+        <input type="datetime-local" id="dateInput">
+    </div>
+
+    <div class="countdown-container">
+        <div class="time-box">
+            <span class="number" id="days">00</span>
+            <span class="label">Dias</span>
+        </div>
+        <div class="time-box">
+            <span class="number" id="hours">00</span>
+            <span class="label">Horas</span>
+        </div>
+        <div class="time-box">
+            <span class="number" id="minutes">00</span>
+            <span class="label">Minutos</span>
+        </div>
+        <div class="time-box">
+            <span class="number" id="seconds">00</span>
+            <span class="label">Segundos</span>
         </div>
     </div>
 
     <script>
-        // DEFINA A DATA DE DESTINO AQUI
-        // Formato: "Mês Dia, Ano Hora:Minuto:Segundo"
-        const targetDate = new Date("Dec 31, 2026 23:59:59").getTime();
+        const input = document.getElementById('dateInput');
+        let timer;
 
-        const updateTimer = setInterval(() => {
-            const now = new Date().getTime();
-            const distance = targetDate - now;
+        // Carregar do navegador
+        const saved = localStorage.getItem('userEventDate');
+        if (saved) {
+            input.value = saved;
+            runTimer(new Date(saved).getTime());
+        }
 
-            // Cálculos matemáticos para dias, horas, minutos e segundos
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        input.onchange = () => {
+            const target = new Date(input.value).getTime();
+            localStorage.setItem('userEventDate', input.value);
+            runTimer(target);
+        };
 
-            // Inserindo os resultados nos elementos HTML
-            document.getElementById("days").innerText = days.toString().padStart(2, '0');
-            document.getElementById("hours").innerText = hours.toString().padStart(2, '0');
-            document.getElementById("minutes").innerText = minutes.toString().padStart(2, '0');
-            document.getElementById("seconds").innerText = seconds.toString().padStart(2, '0');
+        function runTimer(target) {
+            if (timer) clearInterval(timer);
+            
+            const calculate = () => {
+                const now = new Date().getTime();
+                const diff = target - now;
 
-            // Se a contagem terminar
-            if (distance < 0) {
-                clearInterval(updateTimer);
-                document.querySelector(".countdown").innerHTML = "<h2>Tempo Esgotado!</h2>";
-            }
-        }, 1000);
+                if (diff <= 0) {
+                    clearInterval(timer);
+                    render(0,0,0,0);
+                    return;
+                }
+
+                render(
+                    Math.floor(diff / 86400000),
+                    Math.floor((diff % 86400000) / 3600000),
+                    Math.floor((diff % 3600000) / 60000),
+                    Math.floor((diff % 60000) / 1000)
+                );
+            };
+
+            timer = setInterval(calculate, 1000);
+            calculate();
+        }
+
+        function render(d, h, m, s) {
+            document.getElementById('days').innerText = d.toString().padStart(2, '0');
+            document.getElementById('hours').innerText = h.toString().padStart(2, '0');
+            document.getElementById('minutes').innerText = m.toString().padStart(2, '0');
+            document.getElementById('seconds').innerText = s.toString().padStart(2, '0');
+        }
     </script>
-
 </body>
 </html>
